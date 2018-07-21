@@ -207,8 +207,7 @@ for epoch in range(start_epoch, n_epochs):
                     'Loss D_A: {0:.5f}'.format(loss_D_A)+'\n'+
                     '==================================='+'\n')
             f.close()
-
-        print('HELLO')
+            
     
     # Learning rate decay:   
     if(epoch > decay_epoch):
