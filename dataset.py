@@ -34,7 +34,12 @@ class ImageDataset(Dataset):
         return image_A, image_B
 
     def __len__(self):
-        return max(len(self.images_A), len(self.images_B))
+        
+        # Right method:
+        #return max(len(self.images_A), len(self.images_B))
+        
+        # But to reduce the size of an epoch:
+        return 3000
 
 
 
