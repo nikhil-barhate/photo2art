@@ -1,18 +1,27 @@
 import torch
 import torch.nn as nn
 
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv') != -1:
+        m.weight.data.normal_(0.0, 0.02)
+    elif classname.find('BatchNorm') != -1:
+        m.weight.data.normal_(1.0, 0.02)
+        m.bias.data.fill_(0)
+
+
 class ResidualBlock(nn.Module):
-    def __init__(self, in_features):
+    def __init__(self, n_features):
         super(ResidualBlock, self).__init__()
         
         self.conv_block = nn.Sequential(
                 
-                nn.Conv2d(in_features, in_features, 3, 1, 1),
-                nn.BatchNorm2d(in_features),
+                nn.Conv2d(n_features, n_features, 3, 1, 1),
+                nn.BatchNorm2d(n_features),
                 nn.ReLU(inplace=True),
                 
-                nn.Conv2d(in_features, in_features, 3, 1, 1),
-                nn.BatchNorm2d(in_features),
+                nn.Conv2d(n_features, n_features, 3, 1, 1),
+                nn.BatchNorm2d(n_features),
                 nn.ReLU(inplace=True) )
     
     def forward(self, x):
@@ -20,7 +29,7 @@ class ResidualBlock(nn.Module):
 
 
 class Generator(nn.Module):
-    def __init__(self, in_ch, out_ch, n_blocks=4):
+    def __init__(self, in_ch=3, out_ch=3, n_blocks=4):
         super(Generator, self).__init__()
         
         self.in_ch = in_ch
@@ -111,4 +120,4 @@ class Discriminator(nn.Module):
 #print('Fake image size {}'.format(fake.size()))
 #
 #print(dis(fake))
-#
+
