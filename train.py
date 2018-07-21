@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torchvision.transforms as transforms
 import torch.nn as nn
@@ -7,20 +9,25 @@ from dataset import ImageDataset
 
 from models import Generator
 from models import Discriminator
-#from models import weights_init
+from models import weights_init
 
 ########## Parameters ###########
 
+in_nc = 3
+
 batch_size = 1
-start_epoch = 0
 n_epochs = 200
+
+start_epoch = 0
+start_epoch_part = 1
 
 lr = 0.0002
 decay_epoch = 100
 lr_decay = lr / (n_epochs-decay_epoch)
 
-in_ch = 3
-out_ch = 3
+if(start_epoch > decay_epoch):
+    for _ in range(decay_epoch, start_epoch):
+        lr -= lr_decay
 
 ########## Defining variables ###########
 
@@ -37,15 +44,24 @@ dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                          shuffle=True)
 
 # Networks:
-G_A2B = Generator(in_ch, out_ch).to(device)
-D_B = Discriminator(in_ch).to(device)
-G_B2A = Generator(in_ch, out_ch).to(device)
-D_A = Discriminator(in_ch).to(device)
+G_A2B = Generator(in_nc).to(device)
+D_B = Discriminator(in_nc).to(device)
+G_B2A = Generator(in_nc).to(device)
+D_A = Discriminator(in_nc).to(device)
 
-#D_B.apply(weights_init)
-#G_B2A.apply(weights_init)
-#G_A2B.apply(weights_init)
-#D_A.apply(weights_init)
+if(start_epoch == 0):
+    D_B.apply(weights_init)
+    G_B2A.apply(weights_init)
+    G_A2B.apply(weights_init)
+    D_A.apply(weights_init)
+
+else:
+    G_A2B.load_state_dict(torch.load('./checkpoints/{}/G_A2B_{}_{}.pth'.format(start_epoch, start_epoch, start_epoch_part)))
+    D_B.load_state_dict(torch.load('./checkpoints/{}/D_B_{}_{}.pth'.format(start_epoch, start_epoch, start_epoch_part)))
+    G_B2A.load_state_dict(torch.load('./checkpoints/{}/G_B2A_{}_{}.pth'.format(start_epoch, start_epoch, start_epoch_part)))
+    D_A.load_state_dict(torch.load('./checkpoints/{}/D_A_{}_{}.pth'.format(start_epoch, start_epoch, start_epoch_part)))
+    start_epoch += 1
+    print('-> Starting epoch number {}'.format(start_epoch))
 
 # Loss functions:
 loss_fn_GAN = nn.MSELoss()
@@ -158,13 +174,36 @@ for epoch in range(start_epoch, n_epochs):
         
         optimizer_D_A.step()
         
-        print("HELLO")
+        # Status Report:
+        if((i+1)%1000 == 0):
+            print('===================================')
+            print('[{} , {}]:'.format(epoch, i+1))
+            print('Loss G_A2B: {}'.format(loss_G_A2B))
+            print('Loss D_B: {}'.format(loss_D_B))
+            print('Loss G_B2A: {}'.format(loss_G_B2A))
+            print('Loss D_A: {}'.format(loss_D_A))
+            print('===================================')
         
-    if(epoch>decay_epoch):
+        
+        # Saving the state:
+        if((i+1)%500 == 0):
+            part = (i+1)/500
+            
+            if not os.path.exists('./checkpoints/{}/'.format(epoch)):
+                os.makedirs('./checkpoints/{}/'.format(epoch))
+            
+            torch.save(G_A2B.state_dict(), './checkpoints/{}/G_A2B_{}_{}.pth'.format(epoch, epoch, part))
+            torch.save(D_B.state_dict(), './checkpoints/{}/D_B_{}_{}.pth'.format(epoch, epoch, part))
+            torch.save(G_B2A.state_dict(), './checkpoints/{}/G_B2A_{}_{}.pth'.format(epoch, epoch, part))
+            torch.save(D_A.state_dict(), './checkpoints/{}/D_A_{}_{}.pth'.format(epoch, epoch, part))
+
+                
+    
+    # Learning rate decay:   
+    if(epoch > decay_epoch):
         lr -= lr_decay
     
-    # Save the state
     
-    
-        
- 
+
+
+
