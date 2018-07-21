@@ -174,19 +174,18 @@ for epoch in range(start_epoch, n_epochs):
         
         optimizer_D_A.step()
         
-        # Status Report:
-        if((i+1)%1000 == 0):
+        
+        # Status report and saving the state:
+        if((i+1)%500 == 0):
+            
             print('===================================')
             print('[{} , {}]:'.format(epoch, i+1))
-            print('Loss G_A2B: {}'.format(loss_G_A2B))
-            print('Loss D_B: {}'.format(loss_D_B))
-            print('Loss G_B2A: {}'.format(loss_G_B2A))
-            print('Loss D_A: {}'.format(loss_D_A))
+            print('Loss G_A2B: {0:.5f}'.format(loss_G_A2B))
+            print('Loss D_B: {0:.5f}'.format(loss_D_B))
+            print('Loss G_B2A: {0:.5f}'.format(loss_G_B2A))
+            print('Loss D_A: {0:.5f}'.format(loss_D_A))
             print('===================================')
-        
-        
-        # Saving the state:
-        if((i+1)%500 == 0):
+            
             part = (i+1)/500
             
             if not os.path.exists('./checkpoints/{}/'.format(epoch)):
@@ -196,14 +195,26 @@ for epoch in range(start_epoch, n_epochs):
             torch.save(D_B.state_dict(), './checkpoints/{}/D_B_{}_{}.pth'.format(epoch, epoch, part))
             torch.save(G_B2A.state_dict(), './checkpoints/{}/G_B2A_{}_{}.pth'.format(epoch, epoch, part))
             torch.save(D_A.state_dict(), './checkpoints/{}/D_A_{}_{}.pth'.format(epoch, epoch, part))
+            
+            # Saving in the log file:
+            f= open('log.txt', 'a')
+            f.write('\n'+ 
+                    '==================================='+'\n'+
+                    '[{} , {}]:'.format(epoch, i+1)+'\n'+
+                    'Loss G_A2B: {0:.5f}'.format(loss_G_A2B)+'\n'+
+                    'Loss D_B: {0:.5f}'.format(loss_D_B)+'\n'+
+                    'Loss G_B2A: {0:.5f}'.format(loss_G_B2A)+'\n'+
+                    'Loss D_A: {0:.5f}'.format(loss_D_A)+'\n'+
+                    '==================================='+'\n')
+            f.close()
 
-                
+        print('HELLO')
     
     # Learning rate decay:   
     if(epoch > decay_epoch):
         lr -= lr_decay
     
     
-
-
-
+    
+    
+    
