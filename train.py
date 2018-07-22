@@ -76,11 +76,13 @@ fake_label = torch.full((batch_size,1,1,1), 0, device=device)
 
 for epoch in range(start_epoch, n_epochs):
     
+    part = start_epoch_part
+    
     # Optimzers:
     optimizer_G_A2B = optim.Adam(G_A2B.parameters(), lr=lr, betas=(0.5, 0.999))
-    optimizer_D_B = optim.Adam(G_A2B.parameters(), lr=lr, betas=(0.5, 0.999))
+    optimizer_D_B = optim.Adam(D_B.parameters(), lr=lr, betas=(0.5, 0.999))
     optimizer_G_B2A = optim.Adam(G_B2A.parameters(), lr=lr, betas=(0.5, 0.999))
-    optimizer_D_A = optim.Adam(G_B2A.parameters(), lr=lr, betas=(0.5, 0.999))
+    optimizer_D_A = optim.Adam(G_A.parameters(), lr=lr, betas=(0.5, 0.999))
     
     for i, data in enumerate(dataloader):
         
@@ -186,10 +188,17 @@ for epoch in range(start_epoch, n_epochs):
             print('Loss D_A: {0:.5f}'.format(loss_D_A))
             print('===================================')
             
-            part = (i+1)/500
+            part += 1
+            
+            if(part>6):
+                part=0
+                start_epoch_part=0
+                break
             
             if not os.path.exists('./checkpoints/{}/'.format(epoch)):
                 os.makedirs('./checkpoints/{}/'.format(epoch))
+            
+            part = int(part)
             
             torch.save(G_A2B.state_dict(), './checkpoints/{}/G_A2B_{}_{}.pth'.format(epoch, epoch, part))
             torch.save(D_B.state_dict(), './checkpoints/{}/D_B_{}_{}.pth'.format(epoch, epoch, part))
