@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 
 class ImageDataset(Dataset):
    
-    def __init__(self, root, transform=None, train=True):
+    def __init__(self, root, transform=None, train=False):
         
         self.transform = transform
         self.root = root
