@@ -61,9 +61,5 @@ for i, data in enumerate(dataloader):
 #
 #
 #save_image(painting)
-    
-
-
-
-
-
+   
+  
