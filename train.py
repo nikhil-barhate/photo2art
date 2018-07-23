@@ -19,7 +19,7 @@ batch_size = 1
 n_epochs = 200
 
 start_epoch = 0
-start_epoch_part = 1
+start_epoch_part = 0
 
 lr = 0.0002
 decay_epoch = 100
@@ -49,7 +49,7 @@ D_B = Discriminator(in_nc).to(device)
 G_B2A = Generator(in_nc).to(device)
 D_A = Discriminator(in_nc).to(device)
 
-if(start_epoch == 0):
+if(start_epoch == 0 and start_epoch_part == 0):
     D_B.apply(weights_init)
     G_B2A.apply(weights_init)
     G_A2B.apply(weights_init)
@@ -60,8 +60,7 @@ else:
     D_B.load_state_dict(torch.load('./checkpoints/{}/D_B_{}_{}.pth'.format(start_epoch, start_epoch, start_epoch_part)))
     G_B2A.load_state_dict(torch.load('./checkpoints/{}/G_B2A_{}_{}.pth'.format(start_epoch, start_epoch, start_epoch_part)))
     D_A.load_state_dict(torch.load('./checkpoints/{}/D_A_{}_{}.pth'.format(start_epoch, start_epoch, start_epoch_part)))
-    start_epoch += 1
-    print('-> Starting epoch number {}'.format(start_epoch))
+    print('-> Loaded epoch number {} part {}'.format(start_epoch, start_epoch_part))
 
 # Loss functions:
 loss_fn_GAN = nn.MSELoss()
@@ -76,13 +75,13 @@ fake_label = torch.full((batch_size,1,1,1), 0, device=device)
 
 for epoch in range(start_epoch, n_epochs):
     
-    part = start_epoch_part
+    part = int(start_epoch_part)
     
     # Optimzers:
     optimizer_G_A2B = optim.Adam(G_A2B.parameters(), lr=lr, betas=(0.5, 0.999))
     optimizer_D_B = optim.Adam(D_B.parameters(), lr=lr, betas=(0.5, 0.999))
     optimizer_G_B2A = optim.Adam(G_B2A.parameters(), lr=lr, betas=(0.5, 0.999))
-    optimizer_D_A = optim.Adam(G_A.parameters(), lr=lr, betas=(0.5, 0.999))
+    optimizer_D_A = optim.Adam(D_A.parameters(), lr=lr, betas=(0.5, 0.999))
     
     for i, data in enumerate(dataloader):
         
@@ -180,13 +179,14 @@ for epoch in range(start_epoch, n_epochs):
         # Status report and saving the state:
         if((i+1)%500 == 0):
             
-            print('===================================')
-            print('[{} , {}]:'.format(epoch, i+1))
-            print('Loss G_A2B: {0:.5f}'.format(loss_G_A2B))
-            print('Loss D_B: {0:.5f}'.format(loss_D_B))
-            print('Loss G_B2A: {0:.5f}'.format(loss_G_B2A))
-            print('Loss D_A: {0:.5f}'.format(loss_D_A))
-            print('===================================')
+            print('\n'+ 
+                    '==================================='+'\n'+
+                    '[{} , {}]:'.format(epoch, i+1)+'\n'+
+                    'Loss G_A2B: {0:.5f}'.format(loss_G_A2B)+'\n'+
+                    'Loss D_B: {0:.5f}'.format(loss_D_B)+'\n'+
+                    'Loss G_B2A: {0:.5f}'.format(loss_G_B2A)+'\n'+
+                    'Loss D_A: {0:.5f}'.format(loss_D_A)+'\n'+
+                    '==================================='+'\n')
             
             part += 1
             
@@ -222,7 +222,4 @@ for epoch in range(start_epoch, n_epochs):
     if(epoch > decay_epoch):
         lr -= lr_decay
     
-    
-    
-    
-    
+ 
