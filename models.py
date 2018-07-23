@@ -61,7 +61,7 @@ class Generator(nn.Module):
         
 
 class Discriminator(nn.Module):
-    def __init__(self, in_ch):
+    def __init__(self, in_ch=3):
         super(Discriminator, self).__init__()
         
         self.main = nn.Sequential(
