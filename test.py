@@ -3,14 +3,18 @@ from models import Generator
 from torchvision.utils import save_image
 import torchvision.transforms as transforms
 from dataset import ImageDataset
+from PIL import Image
 
 batch_size = 1
 start_epoch = 4
 start_epoch_part = 5
 
-transform = transforms.Compose([transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+#transform = transforms.Compose([transforms.RandomHorizontalFlip(),
+#            transforms.ToTensor(),
+#            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+transform = transforms.Compose([transforms.ToTensor()])
+
 
 dataset = ImageDataset('./data/monet/', transform = transform, train=False)
 
@@ -30,7 +34,10 @@ for i, data in enumerate(dataloader):
     
     image_A, image_B = data
     
-    image_A, image_B = image_A.to(device), image_B.to(device) 
+    image_A, image_B = image_A.to(device), image_B.to(device)
+    
+    save_image(image_A,'./output/painting_orig.jpg')
+    save_image(image_B,'./output/photo_orig.jpg')
     
     new_A = G_monet(image_B)
     
@@ -40,5 +47,23 @@ for i, data in enumerate(dataloader):
     save_image(new_B,'./output/photo.jpg')
     
     break
+
+
+
+#photo = Image.open('./data/monet/testB/2014-08-01 17:41:55.jpg')
+#photo.show()
+#
+#transform = transforms.Compose(transforms.ToTensor())
+#
+#photo = transform([photo])
+#
+#painting = G_monet(photo)
+#
+#
+#save_image(painting)
+    
+
+
+
 
 
