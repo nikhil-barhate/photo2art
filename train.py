@@ -60,6 +60,12 @@ else:
     D_B.load_state_dict(torch.load('./checkpoints/{}/D_B_{}_{}.pth'.format(start_epoch, start_epoch, start_epoch_part)))
     G_B2A.load_state_dict(torch.load('./checkpoints/{}/G_B2A_{}_{}.pth'.format(start_epoch, start_epoch, start_epoch_part)))
     D_A.load_state_dict(torch.load('./checkpoints/{}/D_A_{}_{}.pth'.format(start_epoch, start_epoch, start_epoch_part)))
+    
+    G_A2B.eval()
+    D_B.eval()
+    G_B2A.eval()
+    D_A.eval()
+    
     print('-> Loaded epoch number {} part {}'.format(start_epoch, start_epoch_part))
 
 # Loss functions:
@@ -222,4 +228,3 @@ for epoch in range(start_epoch, n_epochs):
     if(epoch > decay_epoch):
         lr -= lr_decay
     
-     
