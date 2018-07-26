@@ -10,19 +10,17 @@ batch_size = 1
 start_epoch = 4
 start_epoch_part = 5
 
-#transform = transforms.Compose([transforms.RandomHorizontalFlip(),
-#            transforms.ToTensor(),
-#            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-transform = transforms.Compose([transforms.ToTensor()])
-
+transform = transforms.Compose([transforms.ToTensor(),
+                                transforms.Normalize((0.5, 0.5, 0.5),(0.5, 0.5, 0.5))])
 
 dataset = ImageDataset('./data/monet/', transform = transform, train=False)
 
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, 
                                          shuffle=True)
 
+
 device = torch.device('cuda:0' if torch.cuda.is_available else 'cpu')
+
 
 G_monet = Generator().to(device)
 G_photo = Generator().to(device)
@@ -65,5 +63,7 @@ for i, data in enumerate(dataloader):
 #
 #
 #save_image(painting)
+
+
 
 
