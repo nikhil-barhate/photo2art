@@ -36,12 +36,12 @@ class Generator(nn.Module):
         self.out_ch = out_ch
         self.n_blocks = n_blocks
         
-        # input size: 3 x 256 x 256
+        # input size: in_ch x 256 x 256
         
         n_features = 64
         
         # 1st conv:
-        model = [ nn.Conv2d(in_ch, n_features, 3, 1, 1),
+        model = [ nn.Conv2d(in_ch, n_features, 4, 2, 1),
                   nn.BatchNorm2d(n_features),
                   nn.ReLU(inplace=True) ]
         
@@ -49,10 +49,10 @@ class Generator(nn.Module):
             model += [ResidualBlock(n_features)]
         
         # last conv with tanh
-        model += [ nn.Conv2d(n_features, out_ch, 3, 1, 1),
+        model += [ nn.ConvTranspose2d(n_features, out_ch, 4, 2, 1),
                    nn.Tanh() ]
         
-        # output size: 3 x 256 x 256
+        # output size: out_ch x 256 x 256
         
         self.model = nn.Sequential(*model)
     
@@ -64,7 +64,7 @@ class Discriminator(nn.Module):
     def __init__(self, in_ch=3):
         super(Discriminator, self).__init__()
         
-        self.main = nn.Sequential(
+        self.model = nn.Sequential(
             
             # input size: 3 x 256 x 256
             nn.Conv2d(3, 64, 4, 2, 1, bias=False),
@@ -99,7 +99,7 @@ class Discriminator(nn.Module):
             )
         
     def forward(self, input):
-        return self.main(input)
+        return self.model(input)
 
 
 
@@ -120,4 +120,5 @@ class Discriminator(nn.Module):
 #print('Fake image size {}'.format(fake.size()))
 #
 #print(dis(fake))
+
 
