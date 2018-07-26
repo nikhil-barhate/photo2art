@@ -29,6 +29,9 @@ G_photo = Generator().to(device)
 G_monet.load_state_dict(torch.load('./checkpoints/{}/G_B2A_{}_{}.pth'.format(start_epoch, start_epoch, start_epoch_part)))
 G_photo.load_state_dict(torch.load('./checkpoints/{}/G_A2B_{}_{}.pth'.format(start_epoch, start_epoch, start_epoch_part)))
 
+G_monet.eval()
+G_photo.eval()
+
 
 for i, data in enumerate(dataloader):
     
@@ -61,5 +64,6 @@ for i, data in enumerate(dataloader):
 #
 #
 #save_image(painting)
-   
-  
+    
+
+
