@@ -1,3 +1,4 @@
+import os
 import torch
 from models import Generator
 from torchvision.utils import save_image
@@ -32,6 +33,8 @@ G_photo.load_state_dict(torch.load('./checkpoints/{}/G_A2B_{}_{}.pth'.format(sta
 G_monet.eval()
 G_photo.eval()
 
+if not os.path.exists('./output/'):
+    os.makedirs('./output/')
 
 for i, data in enumerate(dataloader):
     
@@ -51,8 +54,6 @@ for i, data in enumerate(dataloader):
     
     break
 
-
-
 #photo = Image.open('./data/monet/testB/2014-08-01 17:41:55.jpg')
 #photo.show()
 #
@@ -64,6 +65,5 @@ for i, data in enumerate(dataloader):
 #
 #
 #save_image(painting)
-    
 
 
