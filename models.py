@@ -29,7 +29,7 @@ class ResidualBlock(nn.Module):
 
 
 class Generator(nn.Module):
-    def __init__(self, in_ch=3, out_ch=3, n_blocks=4):
+    def __init__(self, in_ch=3, out_ch=3, n_blocks=8):
         super(Generator, self).__init__()
         
         self.in_ch = in_ch
@@ -41,7 +41,7 @@ class Generator(nn.Module):
         n_features = 64
         
         # 1st conv:
-        model = [ nn.Conv2d(in_ch, n_features, 4, 2, 1),
+        model = [ nn.Conv2d(in_ch, n_features, 3, 1, 1),
                   nn.BatchNorm2d(n_features),
                   nn.ReLU(inplace=True) ]
         
@@ -49,7 +49,7 @@ class Generator(nn.Module):
             model += [ResidualBlock(n_features)]
         
         # last conv with tanh
-        model += [ nn.ConvTranspose2d(n_features, out_ch, 4, 2, 1),
+        model += [ nn.Conv2d(n_features, out_ch, 3, 1, 1),
                    nn.Tanh() ]
         
         # output size: out_ch x 256 x 256
