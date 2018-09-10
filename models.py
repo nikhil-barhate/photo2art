@@ -1,124 +1,104 @@
-import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import torch
 
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
-        m.weight.data.normal_(0.0, 0.02)
-    elif classname.find('BatchNorm') != -1:
-        m.weight.data.normal_(1.0, 0.02)
-        m.bias.data.fill_(0)
+        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
+    elif classname.find('BatchNorm2d') != -1:
+        torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
+        torch.nn.init.constant_(m.bias.data, 0.0)
 
+
+##############################
+#           RESNET
+##############################
 
 class ResidualBlock(nn.Module):
-    def __init__(self, n_features):
+    def __init__(self, in_features):
         super(ResidualBlock, self).__init__()
-        
-        self.conv_block = nn.Sequential(
-                
-                nn.Conv2d(n_features, n_features, 3, 1, 1),
-                nn.BatchNorm2d(n_features),
-                nn.ReLU(inplace=True),
-                
-                nn.Conv2d(n_features, n_features, 3, 1, 1),
-                nn.BatchNorm2d(n_features),
-                nn.ReLU(inplace=True) )
-    
-    def forward(self, x):
-        return self.conv_block(x) + x
 
+        conv_block = [  nn.ReflectionPad2d(1),
+                        nn.Conv2d(in_features, in_features, 3),
+                        nn.InstanceNorm2d(in_features),
+                        nn.ReLU(inplace=True),
+                        nn.ReflectionPad2d(1),
+                        nn.Conv2d(in_features, in_features, 3),
+                        nn.InstanceNorm2d(in_features)  ]
+
+        self.conv_block = nn.Sequential(*conv_block)
+
+    def forward(self, x):
+        return x + self.conv_block(x)
 
 class Generator(nn.Module):
-    def __init__(self, in_ch=3, out_ch=3, n_blocks=8):
+    def __init__(self, in_channels=3, out_channels=3, res_blocks=9):
         super(Generator, self).__init__()
-        
-        self.in_ch = in_ch
-        self.out_ch = out_ch
-        self.n_blocks = n_blocks
-        
-        # input size: in_ch x 256 x 256
-        
-        n_features = 64
-        
-        # 1st conv:
-        model = [ nn.Conv2d(in_ch, n_features, 3, 1, 1),
-                  nn.BatchNorm2d(n_features),
-                  nn.ReLU(inplace=True) ]
-        
-        for i in range(self.n_blocks):
-            model += [ResidualBlock(n_features)]
-        
-        # last conv with tanh
-        model += [ nn.Conv2d(n_features, out_ch, 3, 1, 1),
-                   nn.Tanh() ]
-        
-        # output size: out_ch x 256 x 256
-        
+
+        # Initial convolution block
+        model = [   nn.ReflectionPad2d(3),
+                    nn.Conv2d(in_channels, 64, 7),
+                    nn.InstanceNorm2d(64),
+                    nn.ReLU(inplace=True) ]
+
+        # Downsampling
+        in_features = 64
+        out_features = in_features*2
+        for _ in range(2):
+            model += [  nn.Conv2d(in_features, out_features, 3, stride=2, padding=1),
+                        nn.InstanceNorm2d(out_features),
+                        nn.ReLU(inplace=True) ]
+            in_features = out_features
+            out_features = in_features*2
+
+        # Residual blocks
+        for _ in range(res_blocks):
+            model += [ResidualBlock(in_features)]
+
+        # Upsampling
+        out_features = in_features//2
+        for _ in range(2):
+            model += [  nn.ConvTranspose2d(in_features, out_features, 3, stride=2, padding=1, output_padding=1),
+                        nn.InstanceNorm2d(out_features),
+                        nn.ReLU(inplace=True) ]
+            in_features = out_features
+            out_features = in_features//2
+
+        # Output layer
+        model += [  nn.ReflectionPad2d(3),
+                    nn.Conv2d(64, out_channels, 7),
+                    nn.Tanh() ]
+
         self.model = nn.Sequential(*model)
-    
-    def forward(self, input):
-        return self.model(input)
-        
+
+    def forward(self, x):
+        return self.model(x)
+
+##############################
+#        Discriminator
+##############################
 
 class Discriminator(nn.Module):
-    def __init__(self, in_ch=3):
+    def __init__(self, in_channels=3):
         super(Discriminator, self).__init__()
-        
+
+        def discriminator_block(in_filters, out_filters, normalize=True):
+            """Returns downsampling layers of each discriminator block"""
+            layers = [nn.Conv2d(in_filters, out_filters, 4, stride=2, padding=1)]
+            if normalize:
+                layers.append(nn.InstanceNorm2d(out_filters))
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+            return layers
+
         self.model = nn.Sequential(
-            
-            # input size: 3 x 256 x 256
-            nn.Conv2d(3, 64, 4, 2, 1, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
-            
-            # state size: 64 x 128 x 128
-            nn.Conv2d(64, 128, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(128),
-            nn.LeakyReLU(0.2, inplace=True),
-            
-            # state size: 128 x 64 x 64
-            nn.Conv2d(128, 256, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(256),
-            nn.LeakyReLU(0.2, inplace=True),
-            
-            # state size: 256 x 32 x 32
-            nn.Conv2d(256, 512, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(512),
-            nn.LeakyReLU(0.2, inplace=True),
-            
-            # state size: 512 x 16 x 16
-            nn.Conv2d(512, 1, 4, 2, 1, bias=False),
-            
-            # state size: 1 x 8 x 8
-            nn.AvgPool2d(4, 2, 1),
-            
-            # state size: 1 x 4 x 4
-            nn.AvgPool2d(4, 1, 0),
-            
-            # state size: 1 x 1 x 1
-            nn.Sigmoid(),
-            )
-        
-    def forward(self, input):
-        return self.model(input)
+            *discriminator_block(in_channels, 64, normalize=False),
+            *discriminator_block(64, 128),
+            *discriminator_block(128, 256),
+            *discriminator_block(256, 512),
+            nn.ZeroPad2d((1, 0, 1, 0)),
+            nn.Conv2d(512, 1, 4, padding=1)
+        )
 
-
-
-
-## TESTING CODE :
-#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-#
-#dis = Discriminator(3).to(device)
-#
-#gen = Generator(3,3).to(device)
-#
-#z = torch.randn(1,3,256,256).to(device)
-#
-#print('Random image size {}'.format(z.size()))
-#
-#fake = gen(z)
-#
-#print('Fake image size {}'.format(fake.size()))
-#
-#print(dis(fake))
-
-
+    def forward(self, img):
+        return self.model(img)
