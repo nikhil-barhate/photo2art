@@ -69,7 +69,7 @@ else:
     print('-> Loaded epoch number {} part {}'.format(start_epoch, start_epoch_part))
 
 # Loss functions:
-loss_fn_GAN = nn.MSELoss()
+loss_fn_GAN = nn.BCELoss()
 loss_fn_cycle = nn.L1Loss()
 loss_fn_identity = nn.L1Loss()
 
